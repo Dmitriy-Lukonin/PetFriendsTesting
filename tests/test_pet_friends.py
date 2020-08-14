@@ -1,6 +1,6 @@
 from api import PetFriends
-from settings import *
-
+from settings import valid_email, valid_password
+import os
 
 pf = PetFriends()
 
@@ -20,6 +20,7 @@ def test_get_all_pets_with_valid_key(filter=''):  # filter available values : my
 
 def test_add_new_pet_with_valid_data(name='Барбоскин', animal_type='двортерьер',
                                      age='4', pet_photo='images/cat1.jpg'):
+    pet_photo = os.path.join(os.path.dirname(__file__), pet_photo)
     _, auth_key = pf.get_api_key(valid_email, valid_password)
 
     status, result = pf.add_new_pet(auth_key, name, animal_type, age, pet_photo)
