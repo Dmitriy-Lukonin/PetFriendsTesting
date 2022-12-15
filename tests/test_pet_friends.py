@@ -227,9 +227,10 @@ def test_get_my_pets_with_valid_key(filter='my_pets'):
         raise Exception("There is no my pets")
     """Не понятно мне это исключение и что с ним делать? Почему нельзя просто добавить питомца?"""
 
-# 4 Проверка, что фото поменялось "PASSED"
-def test_changes_pet_photo(pet_photo=f'images/{random.choice(images)}'):
-    """Тестируем: Изменение фото питомца в списке"""
+
+# 5 Проверка, что фото поменялось "PASSED"
+def test_successful_changes_pet_photo(pet_photo=f'images/{random.choice(images)}'):
+    """Тестируем: Изменение фото питомца"""
 
     # Получаем полный путь изображения питомца и сохраняем в переменную pet_photo
     pet_photo = os.path.join(os.path.dirname(__file__), pet_photo)
@@ -238,21 +239,54 @@ def test_changes_pet_photo(pet_photo=f'images/{random.choice(images)}'):
     _, auth_key = pf.get_api_key(valid_email, valid_password)
     _, my_pets = pf.get_list_of_pets(auth_key, "my_pets")
 
-    pet_id = my_pets['pets'][0]['id']  # id изменяемого питомца (первый в списке)
-    value_image1 = my_pets['pets'][0]['pet_photo']  # получаем код image изменяемой картинки
+    # Проверяем - если список своих питомцев пустой, то добавляем нового и опять запрашиваем список своих питомцев
+    if len(my_pets['pets']) == 0:
+        pf.add_new_pet(auth_key, "БарBoss", "собака", "10", "images/156.jpg")
+        _, my_pets = pf.get_list_of_pets(auth_key, "my_pets")
 
-    # Добавляем фото
+    pet_id = my_pets['pets'][0]['id']  # id питомца (первый в списке)
+    image = my_pets['pets'][0]['pet_photo']  # получаем код image изменяемой картинки питомца
+
+    # Добавляем питомца с фото
     status, result = pf.add_pet_photo(auth_key, pet_id, pet_photo)
 
     # Сверяем полученный ответ с ожидаемым результатом
     assert status == 200
     # Если значению кода изменяемой картинки не равно полученному значению кода картинки в ответе - PASSED:
-    assert value_image1 != result.get('pet_photo')
+    assert image != result.get('pet_photo')  # - есть ответ от сервера и можно сравнить результаты
 
 
-# 5 POST /api/pets/set_photo{pet_id} Add photo of pet - в работе
+# 6 Проверка, что фото имеет недопустимый формат "PASSED"
+def test_unsuccessful_changes_pet_photo(pet_photo="images/161.heic"):
+    """Тестируем: Изменение фото питомца, формат файла отличен от JPG, JPEG или PNG."""
+
+    # Получаем полный путь изображения питомца и сохраняем в переменную pet_photo
+    pet_photo = os.path.join(os.path.dirname(__file__), pet_photo)
+
+    # Запрашиваем ключ api и сохраняем в переменную auth_key
+    _, auth_key = pf.get_api_key(valid_email, valid_password)
+    _, my_pets = pf.get_list_of_pets(auth_key, "my_pets")
+
+    # Проверяем - если список своих питомцев пустой, то добавляем нового и опять запрашиваем список своих питомцев
+    if len(my_pets['pets']) == 0:
+        pf.add_new_pet(auth_key, "БарBoss", "собака", "10", "images/156.jpg")
+        _, my_pets = pf.get_list_of_pets(auth_key, "my_pets")
+
+    pet_id = my_pets['pets'][0]['id']  # id питомца (первый в списке)
+    image = my_pets['pets'][0]['pet_photo']  # получаем код image изменяемой картинки питомца
+
+    # Добавляем питомца с фото
+    status, result = pf.add_pet_photo(auth_key, pet_id, pet_photo)
+
+    # Сверяем полученный ответ с ожидаемым результатом
+    assert status == 500
+    # Проверяем что фото не изменилось
+    assert image == my_pets['pets'][0]['pet_photo']
+
+
+# 7 Проверяем, что нет возможности добавить фото к существующему питомцу с невалидным "key"
 def test_unsuccessful_add_pet_photo(pet_photo=f'images/{random.choice(images)}'):
-    """Проверяем что нет возможности добавить фото к существующему питомцу с невалидными данными"""
+    """Проверяем, что нет возможности добавить фото к существующему питомцу с невалидным "key"."""
 
     # Получаем полный путь изображения питомца и сохраняем в переменную pet_photo
     pet_photo = os.path.join(os.path.dirname(__file__), pet_photo)
@@ -266,17 +300,14 @@ def test_unsuccessful_add_pet_photo(pet_photo=f'images/{random.choice(images)}')
         pf.add_new_pet(auth_key, "Вася", "Кот", 3, pet_photo)
         _, my_pets = pf.get_list_of_pets(auth_key, "my_pets")
 
-    # Берём id первого питомца из списка и отправляем запрос на добавление фото
+    # Берём id первого питомца из списка и получаем код image изменяемой картинки
     pet_id = my_pets['pets'][0]['id']
-    value_image1 = my_pets['pets'][0]['pet_photo']  # получаем код image изменяемой картинки
-    # print(value_image1)
+    image = my_pets['pets'][0]['pet_photo']
 
+    # Отправляем запрос на изменение фото питомца с невалидным "key"
     status, result = pf.add_pet_photo({'key': '75'}, pet_id, pet_photo)
-    # print(result)
 
-    # Проверяем что статус ответа равен 200 и у питомца появилось (изменилось) фото и отправленное фото
-    # равно загруженному на сервер
-
+    # Проверяем что статус ответа равен 403 и у питомца не изменилось фото
     assert status == 403
-    assert value_image1 == result.get('pet_photo')  # - над этой проверкой нужно поработать
-    # 5 POST /api/pets/set_photo{pet_id} Add photo of pet - в работе
+    assert image == my_pets['pets'][0]['pet_photo']  # - в ответе от сервера ошибка и нет данных фото
+
