@@ -203,11 +203,11 @@ def test_successful_delete_self_pet_no_auth_key():
     # В swagger питомец удаляется здесь, возвращается ошибка и это верно.
     assert status == 403
     print('\n #2', type(my_pets.values()), my_pets.values())
-    # ID питомца присутствует, но этот код не работает почему
+    # ID питомца присутствует, но это утверждение не работает почему?
     assert pet_id in my_pets.values()
 
 
-# 4 Проверим работу фильтра мои питомцы убедимся в том, что список выдает моих питомцев - в работе
+# 4 Проверим работу фильтра мои питомцы убедимся в том, что список выдает питомцев
 def test_get_my_pets_with_valid_key(filter='my_pets'):
     """ Проверяем что запрос с фильтром мои питомцы возвращает не пустой список.
     Для этого сначала получаем api ключ и сохраняем в переменную auth_key. Далее используя этот ключ
@@ -219,7 +219,7 @@ def test_get_my_pets_with_valid_key(filter='my_pets'):
     if len(result['pets']) > 0:
 
         assert status == 200
-        print('len', len(result['pets']))
+        print('len', len(result['pets']), result)
         assert len(['pets']) > 0
 
     else:
@@ -297,7 +297,7 @@ def test_unsuccessful_add_pet_photo(pet_photo=f'images/{random.choice(images)}')
 
     # Проверяем - если список своих питомцев пустой, то добавляем нового и опять запрашиваем список своих питомцев
     if len(my_pets['pets']) == 0:
-        pf.add_new_pet(auth_key, "Вася", "Кот", 3, pet_photo)
+        pf.add_new_pet(auth_key, "Вася", "Кот", "3", pet_photo)
         _, my_pets = pf.get_list_of_pets(auth_key, "my_pets")
 
     # Берём id первого питомца из списка и получаем код image изменяемой картинки
@@ -309,5 +309,54 @@ def test_unsuccessful_add_pet_photo(pet_photo=f'images/{random.choice(images)}')
 
     # Проверяем что статус ответа равен 403 и у питомца не изменилось фото
     assert status == 403
-    assert image == my_pets['pets'][0]['pet_photo']  # - в ответе от сервера ошибка и нет данных фото
+    assert image == my_pets['pets'][0]['pet_photo']
 
+
+# 8 Проверяем что в поле возраст можно ввести только целые цифры, иначе ошибка
+# В swagger присутствует проверка на ввод
+def test_add_new_pet_with_no_valid_data(name='Буян', animal_type='Собака', age='2',
+                                        pet_photo=f'images/{random.choice(images)}'):
+    """Проверяем что в поле возраст можно ввести только цифры"""
+
+    # Запрашиваем ключ api и сохраняем в переменную auth_key
+    _, auth_key = pf.get_api_key(valid_email, valid_password)
+
+    # Добавляем питомца
+    status, result = pf.add_new_pet(auth_key, name, animal_type, age, pet_photo)
+
+    # Сверяем полученный ответ с ожидаемым результатом
+    assert status == 200
+    assert isinstance(int(result['age']), int)
+
+
+# 9 Проверяем что незаполненные обязательные поля не дают возможности добавить питомца
+# В swagger присутствует проверка на ввод
+def test_add_new_pet_with_no_data(name='', animal_type='', age='',
+                                  pet_photo=f'images/{random.choice(images)}'):
+    """Проверяем что незаполненные обязательные поля не дают возможности добавить питомца"""
+
+    # Запрашиваем ключ api и сохраняем в переменную auth_key
+    _, auth_key = pf.get_api_key(valid_email, valid_password)
+
+    # Добавляем питомца
+    status, result = pf.add_new_pet(auth_key, name, animal_type, age, pet_photo)
+    print(result)
+    # Сверяем полученный ответ с ожидаемым результатом
+    assert status == 200
+    assert 'id' not in result
+
+
+# 10 Проверяем что поле ввода имени питомца ограничено 32 символами (видимо нет ограничений!)
+def test_add_new_pet_no_data(name=f'Test'*1024, animal_type='Собака', age='1',
+                             pet_photo=f'images/{random.choice(images)}'):
+    """Проверяем что поле ввода имени питомца ограничено 32 символами"""
+
+    # Запрашиваем ключ api и сохраняем в переменную auth_key
+    _, auth_key = pf.get_api_key(valid_email, valid_password)
+
+    # Добавляем питомца
+    status, result = pf.add_new_pet(auth_key, name, animal_type, age, pet_photo)
+    print("\n len name", len(result['name']))
+    # Сверяем полученный ответ с ожидаемым результатом
+    assert status == 200
+    assert len(result['name']) < 33
