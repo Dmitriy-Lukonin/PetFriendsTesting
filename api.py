@@ -5,8 +5,6 @@ import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 
-# Обработка исключений
-
 class PetFriends:
     """API библиотека к веб приложению Pet Friends"""
 
@@ -47,16 +45,12 @@ class PetFriends:
             'password': passwd,
         }
         res = requests.get(self.base_url + 'api/key', headers=headers)
-        # print("#2.1", type(res), res)
         status = res.status_code
-        # print("#2.2", res.status_code)
         result = ""
         try:
             result = res.json()
-            # print("#2.3", result)
         except json.decoder.JSONDecodeError:
             result = res.text
-            # print("2.4", status)
         return status, result
 
     # 3 GET /api/pets Get list of pets
@@ -112,8 +106,6 @@ class PetFriends:
             fields={
                 'pet_photo': (pet_photo, open(pet_photo, 'rb'), 'image/jpeg')
             })
-        # print('запрос data', type(data), data)
-        # print('запрос data.content_type', type(data.content_type), data.content_type)
         headers = {'auth_key': auth_key['key'], 'Content-Type': data.content_type}
 
         res = requests.post(self.base_url + f'api/pets/set_photo/' + pet_id, headers=headers, data=data)
@@ -124,7 +116,6 @@ class PetFriends:
             result = res.json()
         except json.decoder.JSONDecodeError:
             result = res.text
-        # print(result)
         return status, result
 
     # 6 DELETE /api/pets{pet_id} Delete pet from database
