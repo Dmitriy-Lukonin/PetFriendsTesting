@@ -328,6 +328,8 @@ def test_add_new_pet_with_no_valid_data(name='Буян', animal_type='Собак
     assert status == 200
     assert isinstance(int(result['age']), int)
 
+    # здесь я делал условие
+
 
 # 9 Проверяем что незаполненные обязательные поля не дают возможности добавить питомца
 # В swagger присутствует проверка на ввод
