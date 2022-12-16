@@ -363,5 +363,5 @@ def test_add_new_pet_no_data(name=f'Test'*1024, animal_type='Собака', age=
     assert status == 200
     assert len(result['name']) < 33
 
-# это один из последних рабочих вариантов
+# это один из последних рабочих вариантов 1
 
